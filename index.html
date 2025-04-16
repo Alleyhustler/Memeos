@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemeCoin Terminal</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --text-color: #FFD700;
+            --secondary-color: #333333;
+            --accent-color: #FFA500;
+            --error-color: #FF3333;
+            --prompt-color: #00FFFF;
+            --header-color: #111111;
+            --button-color: #FFD700;
+            --button-hover: #FFA500;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        header {
+            background-color: var(--header-color);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--accent-color);
+            position: relative;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo {
+            width: 66px;
+            height: 66px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            animation: pulse 2s infinite;
+        }
+        
+        .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: var(--accent-color);
+            text-shadow: 0 0 5px var(--accent-color);
+        }
+        
+        .social-buttons {
+            display: flex;
+            gap: 1rem;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .social-btn {
+            background-color: var(--button-color);
+            color: #000;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .social-btn:hover {
+            background-color: var(--button-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(255, 165, 0, 0.8);
+        }
+        
+        .social-btn i {
+            font-size: 1.2rem;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .control-btn {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--accent-color);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .control-btn:hover {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+        
+        .terminal-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 1rem;
+            position: relative;
+            background: radial-gradient(ellipse at center, rgba(255,215,0,0.1) 0%, rgba(0,0,0,0) 70%);
+        }
+        
+        .terminal-header {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tab {
+            padding: 0.25rem 0.75rem;
+            background-color: var(--secondary-color);
+            border-radius: 4px 4px 0 0;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+        
+        .terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+            padding-right: 0.5rem;
+        }
+        
+        .terminal-output::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .terminal-output::-webkit-scrollbar-thumb {
+            background-color: var(--accent-color);
+            border-radius: 3px;
+        }
+        
+        .terminal-output::-webkit-scrollbar-track {
+            background-color: var(--secondary-color);
+            border-radius: 3px;
+        }
+        
+        .output-line {
+            margin-bottom: 0.5rem;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        .prompt {
+            color: var(--prompt-color);
+        }
+        
+        .error {
+            color: var(--error-color);
+        }
+        
+        .command-result {
+            padding-left: 1rem;
+        }
+        
+        .input-line {
+            display: flex;
+            position: relative;
+        }
+        
+        .prompt-text {
+            color: var(--prompt-color);
+            margin-right: 0.5rem;
+        }
+        
+        #terminal-input {
+            flex: 1;
+            background-color: transparent;
+            border: none;
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+            caret-color: var(--text-color);
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 1rem;
+            background-color: var(--header-color);
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+            border-top: 2px solid var(--accent-color);
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-color);
+        }
+        
+        .blinking {
+            animation: blink 1s infinite;
+        }
+        
+        .wave-container {
+            position: absolute;
+            bottom: 70px;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            overflow: hidden;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+        
+        .wave {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            animation: wave 3s linear infinite;
+            transform: translateX(-50%);
+        }
+        
+        .code-block {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin: 0.5rem 0;
+            white-space: pre-wrap;
+        }
+        
+        .visualizer {
+            border: 1px solid var(--accent-color);
+            margin: 0.5rem 0;
+            border-radius: 4px;
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .visualizer canvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .help-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 0.5rem 0;
+        }
+        
+        .help-item {
+            border: 1px solid var(--secondary-color);
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .help-command {
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .meme-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 1rem 0;
+        }
+        
+        .meme-image {
+            max-width: 100%;
+            border: 2px solid var(--accent-color);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+        
+        .price-ticker {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            text-shadow: 0 0 5px var(--accent-color);
+            margin: 0.5rem 0;
+        }
+        
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes wave {
+            0% { transform: translateX(-50%) scaleY(1); }
+            50% { transform: translateX(-25%) scaleY(0.5); }
+            100% { transform: translateX(0%) scaleY(1); }
+        }
+        
+        @keyframes pricePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @media (max-width: 768px) {
+            .title {
+                font-size: 1.2rem;
+            }
+            
+            .social-buttons {
+                position: static;
+                transform: none;
+                margin: 0.5rem 0;
+                justify-content: center;
+                width: 100%;
+            }
+            
+            .help-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            header {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <div class="logo">
+                <img src="image-removebg-preview (24) (1).png" alt="MemeCoin Logo">
+            </div>
+            <h1 class="title">MemeOS Terminal</h1>
+        </div>
+        
+        <div class="social-buttons">
+            <button class="social-btn" id="twitter-btn">
+                <i class="fab fa-twitter"></i> Twitter
+            </button>
+            <button class="social-btn" id="telegram-btn">
+                <i class="fab fa-telegram"></i> Telegram
+            </button>
+            <button class="social-btn" id="buy-btn">
+                <i class="fas fa-shopping-cart"></i> Buy Now
+            </button>
+        </div>
+        
+        <div class="controls">
+            <button class="control-btn" id="clear-btn">Clear</button>
+            <button class="control-btn" id="theme-btn">Theme</button>
+            <button class="control-btn" id="help-btn">Help</button>
+        </div>
+    </header>
+    
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="tab active">terminal.meme</div>
+            <div class="tab">chart.meme</div>
+            <div class="tab">+</div>
+        </div>
+        
+        <div class="terminal-output" id="terminal-output">
+            <div class="output-line">
+                <span class="prompt">OS Terminal v2.0.0</span>
+            </div>
+            <div class="output-line">
+                <span class="command-result">Welcome to the official MemeCoin interactive terminal!</span>
+            </div>
+            <div class="output-line">
+                <span class="command-result">Type 'help' to see available commands or 'meme' for fun.</span>
+            </div>
+        </div>
+        
+        <div class="input-line">
+            <span class="prompt-text">memecoin:~$</span>
+            <input type="text" id="terminal-input" autocomplete="off" autofocus>
+        </div>
+        
+        <div class="wave-container">
+            <div class="wave"></div>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="status-indicator blinking"></div>
+            <span>Ready</span>
+        </div>
+        <div class="status-item">
+            <span id="price-display">Price: $0.00</span>
+        </div>
+        <div class="status-item" id="time-display">00:00:00</div>
+    </div>
+
+    <script>
+        // Terminal functionality
+        const terminal = document.getElementById('terminal-output');
+        const input = document.getElementById('terminal-input');
+        const clearBtn = document.getElementById('clear-btn');
+        const themeBtn = document.getElementById('theme-btn');
+        const helpBtn = document.getElementById('help-btn');
+        const timeDisplay = document.getElementById('time-display');
+        const priceDisplay = document.getElementById('price-display');
+        const twitterBtn = document.getElementById('twitter-btn');
+        const telegramBtn = document.getElementById('telegram-btn');
+        const buyBtn = document.getElementById('buy-btn');
+        
+        let commandHistory = [];
+        let historyIndex = -1;
+        let visualizerActive = false;
+        let canvas, ctx;
+        let currentPrice = 0.42;
+        let priceInterval;
+        
+        // Meme images
+        const memeImages = [
+            'https://i.imgur.com/8JZxQ7a.jpg',
+            'https://i.imgur.com/VHSvX3h.jpg',
+            'https://i.imgur.com/9E3ZQ7a.jpg',
+            'https://i.imgur.com/5JZxQ7a.jpg'
+        ];
+        
+        // Command handler
+        const commands = {
+            help: () => {
+                addOutput('Available commands:', 'command-result');
+                const helpContent = `
+                <div class="help-grid">
+                    <div class="help-item">
+                        <div class="help-command">help</div>
+                        <div>Show available commands</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-command">clear</div>
+                        <div>Clear terminal output</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-command">price</div>
+                        <div>Show current MemeCoin price</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-command">buy [amount]</div>
+                        <div>Simulate buying MemeCoin</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-command">sell [amount]</div>
+                        <div>Simulate selling MemeCoin</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-command">meme</div>
+                        <div>Display random meme</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-command">chart</div>
+                        <div>Show price chart</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-command">pump</div>
+                        <div>Simulate price pump</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-command">dump</div>
+                        <div>Simulate price dump</div>
+                    </div>
+                    <div class="help-item">
+                        <div class="help-command">about</div>
+                        <div>About MemeCoin</div>
+                    </div>
+                </div>
+                `;
+                addOutput(helpContent, 'command-result');
+            },
+            
+            clear: () => {
+                terminal.innerHTML = '';
+            },
+            
+            price: () => {
+                addOutput(`Current MemeCoin price: $${currentPrice.toFixed(4)}`, 'command-result');
+            },
+            
+            buy: (amount) => {
+                const buyAmount = amount ? parseFloat(amount) : 100;
+                if (isNaN(buyAmount)) {
+                    addOutput('Invalid amount. Usage: buy [amount]', 'error');
+                    return;
+                }
+                
+                // Simulate price impact
+                currentPrice *= 1 + (buyAmount / 10000);
+                updatePriceDisplay();
+                
+                addOutput(`You bought ${buyAmount} MemeCoin for $${(buyAmount * currentPrice).toFixed(2)}`, 'command-result');
+                addOutput('Price increased slightly due to buy pressure!', 'command-result');
+            },
+            
+            sell: (amount) => {
+                const sellAmount = amount ? parseFloat(amount) : 100;
+                if (isNaN(sellAmount)) {
+                    addOutput('Invalid amount. Usage: sell [amount]', 'error');
+                    return;
+                }
+                
+                // Simulate price impact
+                currentPrice *= 1 - (sellAmount / 10000);
+                updatePriceDisplay();
+                
+                addOutput(`You sold ${sellAmount} MemeCoin for $${(sellAmount * currentPrice).toFixed(2)}`, 'command-result');
+                addOutput('Price decreased slightly due to sell pressure!', 'command-result');
+            },
+            
+            meme: () => {
+                const randomMeme = memeImages[Math.floor(Math.random() * memeImages.length)];
+                const memeDisplay = `
+                <div class="meme-display">
+                    <img src="${randomMeme}" alt="Meme" class="meme-image">
+                    <div class="price-ticker">MemeCoin: $${currentPrice.toFixed(4)}</div>
+                </div>
+                `;
+                addOutput(memeDisplay, 'command-result');
+            },
+            
+            chart: () => {
+                createVisualizer();
+                visualizerActive = true;
+                
+                // Generate random price history
+                const priceHistory = [];
+                let lastPrice = currentPrice;
+                for (let i = 0; i < 100; i++) {
+                    lastPrice = lastPrice * (0.995 + Math.random() * 0.01);
+                    priceHistory.push(lastPrice);
+                }
+                
+                const draw = () => {
+                    if (!visualizerActive) return;
+                    
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw grid
+                    ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
+                    ctx.lineWidth = 1;
+                    
+                    // Horizontal grid lines
+                    for (let i = 0; i <= 10; i++) {
+                        const y = canvas.height * (i / 10);
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(canvas.width, y);
+                        ctx.stroke();
+                    }
+                    
+                    // Find min/max for scaling
+                    const minPrice = Math.min(...priceHistory);
+                    const maxPrice = Math.max(...priceHistory);
+                    const range = maxPrice - minPrice;
+                    const scaleY = canvas.height / range;
+                    
+                    // Draw price line
+                    ctx.beginPath();
+                    ctx.moveTo(0, canvas.height - (priceHistory[0] - minPrice) * scaleY);
+                    
+                    for (let i = 1; i < priceHistory.length; i++) {
+                        const x = (i / priceHistory.length) * canvas.width;
+                        const y = canvas.height - (priceHistory[i] - minPrice) * scaleY;
+                        ctx.lineTo(x, y);
+                    }
+                    
+                    ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent-color');
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Add labels
+                    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text-color');
+                    ctx.font = '12px monospace';
+                    ctx.fillText(`$${minPrice.toFixed(4)}`, 5, canvas.height - 5);
+                    ctx.fillText(`$${maxPrice.toFixed(4)}`, 5, 15);
+                    ctx.fillText('MemeCoin Price History', canvas.width / 2 - 50, 15);
+                    
+                    requestAnimationFrame(draw);
+                };
+                
+                draw();
+                addOutput('Price chart activated. Type "stop" to close.', 'command-result');
+            },
+            
+            pump: () => {
+                addOutput('Initiating MemeCoin pump sequence...', 'command-result');
+                addOutput('🚀🚀🚀 TO THE MOON! 🚀🚀🚀', 'command-result');
+                
+                // Simulate pump
+                const pumpAmount = 0.1 + Math.random() * 0.3;
+                currentPrice *= 1 + pumpAmount;
+                updatePriceDisplay();
+                
+                setTimeout(() => {
+                    addOutput(`Price pumped by ${(pumpAmount * 100).toFixed(2)}%!`, 'command-result');
+                    addOutput('Current price: $' + currentPrice.toFixed(4), 'command-result');
+                }, 1000);
+            },
+            
+            dump: () => {
+                addOutput('Oh no! MemeCoin dumping...', 'command-result');
+                addOutput('📉📉📉 PANIC SELL! 📉📉📉', 'command-result');
+                
+                // Simulate dump
+                const dumpAmount = 0.1 + Math.random() * 0.3;
+                currentPrice *= 1 - dumpAmount;
+                updatePriceDisplay();
+                
+                setTimeout(() => {
+                    addOutput(`Price dumped by ${(dumpAmount * 100).toFixed(2)}%!`, 'command-result');
+                    addOutput('Current price: $' + currentPrice.toFixed(4), 'command-result');
+                }, 1000);
+            },
+            
+            about: () => {
+                addOutput(`
+                <div style="padding: 1rem; border: 1px solid var(--accent-color); border-radius: 4px;">
+                    <h3 style="color: var(--accent-color); margin-bottom: 0.5rem;">MemeCoin v2.0.0</h3>
+                    <p>The most meme-tastic cryptocurrency in the universe!</p>
+                    <p>Features include:</p>
+                    <ul style="padding-left: 1.5rem; margin: 0.5rem 0;">
+                        <li>100% decentralized memes</li>
+                        <li>Automatic price pumps (when you least expect it)</li>
+                        <li>Community-driven development</li>
+                        <li>Zero utility, maximum fun</li>
+                    </ul>
+                    <p style="margin-top: 0.5rem;">Made with ♥ by degenerates</p>
+                </div>
+                `, 'command-result');
+            },
+            
+            stop: () => {
+                if (visualizerActive) {
+                    visualizerActive = false;
+                    const visualizer = document.querySelector('.visualizer');
+                    if (visualizer) visualizer.remove();
+                    addOutput('Visualization stopped', 'command-result');
+                } else {
+                    addOutput('No active visualization to stop', 'error');
+                }
+            }
+        };
+        
+        // Helper functions
+        function addOutput(text, className = '') {
+            const outputLine = document.createElement('div');
+            outputLine.className = 'output-line';
+            outputLine.innerHTML = `<span class="${className}">${text}</span>`;
+            terminal.appendChild(outputLine);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        function executeCommand(commandText) {
+            addOutput(`<span class="prompt-text">memecoin:~$</span> ${commandText}`, 'prompt');
+            
+            const [command, ...args] = commandText.trim().split(' ');
+            const argsStr = args.join(' ');
+            
+            if (command in commands) {
+                commands[command](argsStr);
+            } else if (command) {
+                addOutput(`Command not found: ${command}. Type 'help' for available commands.`, 'error');
+            }
+            
+            // Add to history if not empty
+            if (commandText.trim()) {
+                commandHistory.push(commandText);
+                historyIndex = commandHistory.length;
+            }
+        }
+        
+        function createVisualizer() {
+            // Remove existing visualizer if any
+            const existingVisualizer = document.querySelector('.visualizer');
+            if (existingVisualizer) existingVisualizer.remove();
+            
+            // Create new visualizer
+            const visualizer = document.createElement('div');
+            visualizer.className = 'visualizer';
+            
+            canvas = document.createElement('canvas');
+            visualizer.appendChild(canvas);
+            
+            terminal.appendChild(visualizer);
+            
+            // Set canvas size
+            canvas.width = visualizer.clientWidth;
+            canvas.height = visualizer.clientHeight;
+            
+            ctx = canvas.getContext('2d');
+        }
+        
+        function updatePriceDisplay() {
+            priceDisplay.textContent = `Price: $${currentPrice.toFixed(4)}`;
+            priceDisplay.style.animation = 'pricePulse 0.5s';
+            setTimeout(() => {
+                priceDisplay.style.animation = '';
+            }, 500);
+        }
+        
+        function simulatePriceChanges() {
+            // Random small price fluctuations
+            currentPrice *= 0.9995 + Math.random() * 0.001;
+            updatePriceDisplay();
+            
+            // Occasionally bigger moves
+            if (Math.random() < 0.05) {
+                const move = Math.random() < 0.5 ? 1.02 : 0.98;
+                currentPrice *= move;
+                updatePriceDisplay();
+            }
+        }
+        
+        // Event listeners
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const command = input.value;
+                input.value = '';
+                executeCommand(command);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    input.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    input.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    input.value = '';
+                }
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                const text = input.value.trim();
+                if (!text) return;
+                
+                const matchingCommands = Object.keys(commands).filter(cmd => 
+                    cmd.startsWith(text.toLowerCase())
+                );
+                
+                if (matchingCommands.length === 1) {
+                    input.value = matchingCommands[0];
+                    input.setSelectionRange(text.length, input.value.length);
+                }
+            }
+        });
+        
+        clearBtn.addEventListener('click', () => commands.clear());
+        themeBtn.addEventListener('click', () => commands.theme());
+        helpBtn.addEventListener('click', () => commands.help());
+        
+        twitterBtn.addEventListener('click', () => {
+            window.open('https://twitter.com/memecoin', '_blank');
+        });
+        
+        telegramBtn.addEventListener('click', () => {
+            window.open('https://t.me/memecoin', '_blank');
+        });
+        
+        buyBtn.addEventListener('click', () => {
+            executeCommand('buy 100');
+        });
+        
+        // Clock update
+        function updateClock() {
+            const now = new Date();
+            timeDisplay.textContent = now.toTimeString().substring(0, 8);
+        }
+        
+        // Initialize
+        updateClock();
+        setInterval(updateClock, 1000);
+        updatePriceDisplay();
+        priceInterval = setInterval(simulatePriceChanges, 3000);
+        
+        // Handle tab clicks
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+        
+        // Focus input on terminal click
+        document.querySelector('.terminal-container').addEventListener('click', () => {
+            input.focus();
+        });
+        
+        // Initial welcome animation
+        setTimeout(() => {
+            const welcomeMessages = [
+                "Welcome to MemeCoin Terminal",
+                "Type 'help' to see available commands",
+                "Try 'meme' for a random meme",
+                "Check the price with 'price'",
+                "Pump it with 'pump' or dump with 'dump'"
+            ];
+            
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i < welcomeMessages.length) {
+                    addOutput(welcomeMessages[i], 'command-result');
+                    i++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 800);
+        }, 500);
+    </script>
+</body>
+</html>
